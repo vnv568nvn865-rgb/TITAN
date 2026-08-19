@@ -1,15 +1,28 @@
 from memory import Memory
+from planner import Planner
+from executor import Executor
+from tester import Tester
+from diagnostic import Diagnostic
+from reviewer import Reviewer
 
 
 class Titan:
     def __init__(self):
         self.memory = Memory()
+        self.planner = Planner(self.memory)
+        self.executor = Executor(self.memory)
+        self.tester = Tester(self.memory)
+        self.diagnostic = Diagnostic(self.memory)
+        self.reviewer = Reviewer(self.memory)
+
         self.current_task = None
+        self.context = None
+        self.plan = None
 
     def understand(self, task):
         self.current_task = task
 
-        context = {
+        self.context = {
             "goal": task,
             "requirements": [],
             "constraints": [],
@@ -18,40 +31,50 @@ class Titan:
 
         self.memory.add_short_term({
             "type": "understanding",
-            "context": context
+            "context": self.context
         })
 
-        return context
+        return self.context
 
-    def plan(self, context):
-        plan = [
-            "فهم المهمة",
-            "جمع السياق",
-            "تنفيذ الحل",
-            "اختبار النتيجة",
-            "مراجعة العمل"
-        ]
+    def create_plan(self):
+        if self.context is None:
+            raise ValueError("يجب فهم المهمة أولًا")
 
-        self.memory.add_short_term({
-            "type": "plan",
-            "steps": plan
-        })
+        self.plan = self.planner.create_plan(
+            self.context
+        )
 
-        return plan
+        return self.plan
 
-    def execute(self, step):
-        result = {
-            "step": step,
-            "status": "pending",
-            "result": None
-        }
+    def execute(self):
+        if self.plan is None:
+            raise ValueError("يجب إنشاء خطة أولًا")
 
-        self.memory.add_short_term({
-            "type": "execution",
-            "result": result
-        })
+        return self.executor.execute_plan(
+            self.plan
+        )
 
-        return result
+    def test(self, function, expected, *args, **kwargs):
+        return self.tester.run_test(
+            "اختبار الوظيفة",
+            function,
+            expected,
+            *args,
+            **kwargs
+        )
+
+    def diagnose(self, error, context=None):
+        return self.diagnostic.analyze(
+            error,
+            context
+        )
+
+    def review(self, requirements=None, completed=None):
+        return self.reviewer.review(
+            requirements=requirements or [],
+            completed=completed or [],
+            test_results=self.tester.get_results()
+        )
 
     def remember(self, experience):
         self.memory.remember(
@@ -60,22 +83,29 @@ class Titan:
         )
 
     def run(self, task):
-        context = self.understand(task)
-        plan = self.plan(context)
+        self.understand(task)
 
-        results = []
+        plan = self.create_plan()
 
-        for step in plan:
-            result = self.execute(step)
-            results.append(result)
+        execution_results = self.execute()
 
-        self.remember({
+        review = self.review()
+
+        experience = {
             "task": task,
             "plan": plan,
-            "results": results
-        })
+            "execution": execution_results,
+            "review": review
+        }
 
-        return results
+        self.remember(experience)
+
+        return {
+            "context": self.context,
+            "plan": plan,
+            "execution": execution_results,
+            "review": review
+        }
 
 
 if __name__ == "__main__":
@@ -85,5 +115,20 @@ if __name__ == "__main__":
         "حلل المهمة وأنشئ خطة لتنفيذها"
     )
 
-    for item in result:
+    print("=== TITAN ===")
+    print("المهمة:", result["context"]["goal"])
+
+    print("\n=== الخطة ===")
+    for step in result["plan"]["steps"]:
+        print(
+            step["step"],
+            "-",
+            step["action"]
+        )
+
+    print("\n=== التنفيذ ===")
+    for item in result["execution"]:
         print(item)
+
+    print("\n=== المراجعة ===")
+    print(result["review"])
