@@ -11,24 +11,30 @@ jobs:
       - name: Checkout TITAN
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
-      - name: Install Android NDK
-        uses: android-actions/setup-ndk@v3
+      - name: Set up Android NDK
+        uses: nttld/setup-ndk@v1
         with:
-          ndk-version: "27.2.12479018"
+          ndk-version: r27d
+          link-to-sdk: true
 
       - name: Check Android environment
         run: |
           echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
           echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "NDK version:"
+          $ANDROID_NDK_HOME/ndk-build --version
+          echo "CMake version:"
           cmake --version
+          echo "Java version:"
           java -version
+          echo "ADB version:"
           adb version
