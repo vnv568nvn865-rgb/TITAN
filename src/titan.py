@@ -4,6 +4,9 @@ from executor import Executor
 from tester import Tester
 from diagnostic import Diagnostic
 from reviewer import Reviewer
+from model import Model
+from tokenizer import Tokenizer
+from model_config import get_model_config
 
 
 class Titan:
@@ -15,9 +18,16 @@ class Titan:
         self.diagnostic = Diagnostic(self.memory)
         self.reviewer = Reviewer(self.memory)
 
+        self.config = get_model_config()
+        self.tokenizer = Tokenizer()
+        self.model = Model(self.config)
+
         self.current_task = None
         self.context = None
         self.plan = None
+
+    def load_model(self):
+        return self.model.load()
 
     def understand(self, task):
         self.current_task = task
@@ -45,6 +55,19 @@ class Titan:
         )
 
         return self.plan
+
+    def generate(self, prompt):
+        if not self.model.is_loaded():
+            self.load_model()
+
+        token_ids = self.tokenizer.encode(prompt)
+
+        output_ids = self.model.generate(
+            token_ids,
+            self.config["max_new_tokens"]
+        )
+
+        return self.tokenizer.decode(output_ids)
 
     def execute(self):
         if self.plan is None:
@@ -111,14 +134,18 @@ class Titan:
 if __name__ == "__main__":
     titan = Titan()
 
-    result = titan.run(
-        "حلل المهمة وأنشئ خطة لتنفيذها"
-    )
+    titan.load_model()
 
     print("=== TITAN ===")
-    print("المهمة:", result["context"]["goal"])
+    print("النموذج:", titan.config["name"])
+    print("المعاملات:", titan.config["parameters"])
+
+    result = titan.run(
+        "اختبار نظام TITAN"
+    )
 
     print("\n=== الخطة ===")
+
     for step in result["plan"]["steps"]:
         print(
             step["step"],
@@ -126,9 +153,13 @@ if __name__ == "__main__":
             step["action"]
         )
 
-    print("\n=== التنفيذ ===")
-    for item in result["execution"]:
-        print(item)
+    print("\n=== اختبار النموذج ===")
+
+    response = titan.generate(
+        "اكتب خطة بسيطة لإصلاح خطأ برمجي"
+    )
+
+    print(response)
 
     print("\n=== المراجعة ===")
     print(result["review"])
