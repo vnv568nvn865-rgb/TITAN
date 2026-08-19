@@ -11,8 +11,24 @@ jobs:
       - name: Checkout TITAN
         uses: actions/checkout@v4
 
-      - name: Check environment
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK
+        uses: android-actions/setup-ndk@v3
+        with:
+          ndk-version: "27.2.12479018"
+
+      - name: Check Android environment
         run: |
-          echo "TITAN build environment ready"
-          uname -a
-          python3 --version
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          cmake --version
+          java -version
+          adb version
