@@ -1,0 +1,18 @@
+name: TITAN Android Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout TITAN
+        uses: actions/checkout@v4
+
+      - name: Check environment
+        run: |
+          echo "TITAN build environment ready"
+          uname -a
+          python3 --version
