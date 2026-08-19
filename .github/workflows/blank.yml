@@ -27,7 +27,7 @@ jobs:
 
       - name: Clone llama.cpp
         run: |
-          git clone --depth 1 https://github.com/ggml-org/llama.cpp.git
+          git clone --depth 1 https://github.com/ggml-org/llama.cpp.git llama.cpp
 
       - name: Configure llama.cpp
         run: |
@@ -40,7 +40,8 @@ jobs:
             -DGGML_LLAMAFILE=OFF \
             -DLLAMA_BUILD_TESTS=OFF \
             -DLLAMA_BUILD_EXAMPLES=OFF \
-            -DLLAMA_BUILD_SERVER=OFF
+            -DLLAMA_BUILD_SERVER=OFF \
+            llama.cpp
 
       - name: Build llama.cpp
         run: |
