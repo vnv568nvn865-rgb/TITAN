@@ -159,4 +159,34 @@ public class MainActivity extends Activity {
                 null
         );
 
-        if (
+        if (cursor != null) {
+            try {
+                int nameIndex =
+                        cursor.getColumnIndex(
+                                OpenableColumns.DISPLAY_NAME
+                        );
+
+                if (cursor.moveToFirst() &&
+                        nameIndex >= 0) {
+                    return cursor.getString(nameIndex);
+                }
+
+            } finally {
+                cursor.close();
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        if (modelHandle != 0) {
+            LlamaBridge.freeModel(modelHandle);
+            modelHandle = 0;
+        }
+
+        super.onDestroy();
+    }
+}
