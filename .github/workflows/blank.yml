@@ -53,9 +53,27 @@ jobs:
             --config Release \
             -j2
 
-      - name: Verify build
+      - name: Prepare llama.cpp package
         run: |
-          echo "llama.cpp Android ARM64 build completed."
-          find llama.cpp/build -type f \
-            \( -name "*.a" -o -name "*.so" \) \
-            -print
+          mkdir -p artifact/lib
+          mkdir -p artifact/include
+
+          find llama.cpp/build -type f -name "*.a" \
+            -exec cp {} artifact/lib/ \;
+
+          cp -r llama.cpp/include/* artifact/include/
+
+          if [ -d "llama.cpp/ggml/include" ]; then
+            mkdir -p artifact/include/ggml
+            cp -r llama.cpp/ggml/include/* artifact/include/ggml/
+          fi
+
+          echo "Libraries:"
+          find artifact/lib -type f -print
+
+      - name: Upload llama.cpp Android libraries
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama-cpp-android-arm64
+          path: artifact/
+          retention-days: 7
