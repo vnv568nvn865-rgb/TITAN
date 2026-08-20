@@ -53,27 +53,43 @@ jobs:
             --config Release \
             -j2
 
-      - name: Prepare llama.cpp package
+      - name: Show llama.cpp libraries
         run: |
-          mkdir -p artifact/lib
-          mkdir -p artifact/include
+          find llama.cpp/build -type f \
+            \( -name "*.a" -o -name "*.so" \) \
+            -print
 
-          find llama.cpp/build -type f -name "*.a" \
-            -exec cp {} artifact/lib/ \;
+      - name: Configure TITAN native bridge
+        run: |
+          cmake \
+            -S android \
+            -B android/build \
+            -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-28 \
+            -DLLAMA_SOURCE_DIR="$GITHUB_WORKSPACE/llama.cpp" \
+            -DLLAMA_BUILD_DIR="$GITHUB_WORKSPACE/llama.cpp/build"
 
-          cp -r llama.cpp/include/* artifact/include/
+      - name: Build TITAN native bridge
+        run: |
+          cmake --build android/build \
+            --config Release \
+            -j2
 
-          if [ -d "llama.cpp/ggml/include" ]; then
-            mkdir -p artifact/include/ggml
-            cp -r llama.cpp/ggml/include/* artifact/include/ggml/
-          fi
+      - name: Prepare artifact
+        run: |
+          mkdir -p artifact
 
-          echo "Libraries:"
-          find artifact/lib -type f -print
+          find android/build -type f \
+            \( -name "*.so" -o -name "*.a" \) \
+            -exec cp {} artifact/ \;
 
-      - name: Upload llama.cpp Android libraries
+          echo "TITAN native libraries:"
+          find artifact -type f -print
+
+      - name: Upload TITAN Android native libraries
         uses: actions/upload-artifact@v4
         with:
-          name: llama-cpp-android-arm64
+          name: titan-android-arm64
           path: artifact/
           retention-days: 7
